@@ -1,4 +1,5 @@
 import pandas as pd
+import streamlit as st
 
 def process_data(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -27,10 +28,11 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame:
         df['Data da aposta'] = pd.to_datetime(df['Data da aposta'], format='%d/%m/%y', errors='coerce') 
         
         # Remove linhas sem data válida
-        df = df.dropna(subset=['Data da aposta'])
+        df = df.dropna(subset=['Data da aposta'], inplace=True)
         
-        # Cria a coluna Mês/Ano
-        df['Mes/Ano'] = df['Data da aposta'].dt.strftime('%b/%Y').astype('category')
+    # Cria uma coluna Mês/Ano (para análise de tendências)
+    if 'Data' in df.columns:
+        df['Mes/Ano'] = df['Data da aposta'].dt.strftime('%b/%Y').astype(str)  # Formato: Jan/2024
 
     # C. Otimização de Tipo (Ex: Categoria de Mercado)
     if 'Estratégia' in df.columns:
@@ -58,3 +60,37 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame:
          ).mask(df['Stake'] == 0, 0)'''
          
     return df.reset_index(drop=True)
+
+def render_card(title, value, gradient):
+    valor_formatado = f"R${value:,.2f}".replace(',', 'v').replace('.', ',').replace('v', '.')
+    card_style = f"""
+        background: linear-gradient(to right, {gradient});
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        font-size: 1.2em;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    """
+    saldo_style = """
+        font-size: 1.5em;
+        font-weight: bold;
+    """
+    st.markdown(f"""
+        <div style="{card_style}">
+            {title}
+            <div style="{saldo_style}">{valor_formatado}</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+def calculate_balance(df: pd.DataFrame):
+    """Calcula a Receita Total, Despesa Total e Saldo, usando a coluna 'Tipo'."""
+    # Garante que as colunas críticas existem (pode remover se o process_data for robusto)
+    if df.empty or 'Status' not in df.columns or 'L/P' not in df.columns:
+        return 0.0, 0.0, 0.0 # Retorna zero se não houver dados
+
+    receita = df[df['L/P'] > 0.01].sum()
+    despesa = df[df['L/P'] < 0.01].sum()
+    saldo = receita - despesa
+    
+    return receita, despesa, saldo

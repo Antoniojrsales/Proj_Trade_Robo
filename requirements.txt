@@ -6,4 +6,3 @@ streamlit==1.52.1
 streamlit_extras==0.7.8
 gspread==6.2.1
 jupyter==1.1.1
-streamlit.web.base
