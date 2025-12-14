@@ -2,10 +2,20 @@ import streamlit as st
 from utils.auth_check import check_login 
 from utils.data_processing import calculate_trade_accuracy
 
+# -------------------------------
+# ⚙️ Configuração da página
+# -------------------------------
+st.set_page_config(
+    page_title="Análise de Trade | Trade Robo",
+    page_icon="🎲",
+    layout="wide"
+)
+st.sidebar.markdown('Desenvolvido por [AntonioJrSales](https://antoniojrsales.github.io/meu_portfolio/)')
+
+st.title("🎲 Tabelas de Análise de Trade")
+
 # Se não estiver logado, ele para a execução aqui.
 check_login() 
-
-st.title("📊 Tabelas de Análise de Trade")
 
 # 2. Acesso aos dados da sessão
 if 'df_trade_robo' in st.session_state:

@@ -11,6 +11,7 @@ st.set_page_config(
     page_icon="🏠",
     layout="wide"
 )
+st.sidebar.markdown('Desenvolvido por [AntonioJrSales](https://antoniojrsales.github.io/meu_portfolio/)')
 
 st.title('🏠 Painel - Trade Robo')
 
