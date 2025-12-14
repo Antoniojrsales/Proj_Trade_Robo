@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+import numpy as np
 
 def process_data(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -113,3 +114,39 @@ def calculate_trade_balance(df: pd.DataFrame) -> dict:
         "total_ganhos": total_ganhos, 
         "total_perdas_abs": total_perdas_abs
     }
+
+def calculate_trade_accuracy(df: pd.DataFrame):
+    """
+    Calcula a Taxa de Acerto (Winning Rate) e Total de Trades por Estratégia.
+    Assume que 'Resultado' e 'Estratégia' estão presentes.
+    """
+    
+    required_cols = ['Resultado', 'Estratégia']
+    if df.empty or not all(col in df.columns for col in required_cols):
+        return pd.DataFrame() 
+    
+    # A coluna que possui 1 e 0 (is_win) é a que deve ser agregada.
+    acertividade_por_estrategia = df.groupby('Estratégia').agg(
+        # Use 'is_win' para calcular a média (assertividade)
+        taxa_media=('is_win', 'mean'), 
+        Total_Trades=('Estratégia', 'size') # Conta o número de trades
+    ).reset_index()
+
+    # O restante do seu script
+
+    # Renomear a coluna para clareza
+    acertividade_por_estrategia.rename(columns={'taxa_media': 'Assertividade (%)'}, inplace=True) 
+    # Esta renomeação é redundante, mas inofensiva.
+
+    # Converter para porcentagem
+    acertividade_por_estrategia['Assertividade (%)'] = (
+        acertividade_por_estrategia['Assertividade (%)'] * 100
+    ).round(2)
+
+    # Ordenar
+    analise_final = acertividade_por_estrategia.sort_values(
+        by='Assertividade (%)', 
+        ascending=False
+    )
+
+    return analise_final
