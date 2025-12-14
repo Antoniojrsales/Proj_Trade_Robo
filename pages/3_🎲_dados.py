@@ -24,7 +24,7 @@ if 'df_trade_robo' in st.session_state:
 else:
     st.error("Dados não encontrados na sessão. Por favor, volte para o login.")
 
-aba1, aba2 = st.tabs(['Dados Brutos', 'Eficiência / Acertividade']) 
+aba1, aba2 = st.tabs(['Dados Brutos', 'Eficiência / Assertividade']) 
 
 with aba1:
     with st.sidebar.expander("🔍 Visualizar colunas"):
