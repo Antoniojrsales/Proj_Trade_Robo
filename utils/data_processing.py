@@ -27,19 +27,20 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame:
     '''if 'Data da aposta' in df.columns:
         df['Data da aposta'] = pd.to_datetime(df['Data da aposta'], format='%d/%m/%y', errors='coerce') 
         
-        # Remove linhas sem data válida
-        df = df.dropna(subset=['Data da aposta'], inplace=True)
+        # 🛑 CORRIGIDO: Removido o inplace=True e o problema de reatribuição (df = None)
+        df = df.dropna(subset=['Data da aposta'])
         
-    # Cria uma coluna Mês/Ano (para análise de tendências)
-    if 'Data' in df.columns:
-        df['Mes/Ano'] = df['Data da aposta'].dt.strftime('%b/%Y').astype(str)  # Formato: Jan/2024
+        # Cria uma coluna Mês/Ano (para análise de tendências)
+        # 🛑 CORRIGIDO: Checa a coluna 'Data da aposta', não 'Data'
+        df['Mes/Ano'] = df['Data da aposta'].dt.strftime('%b/%Y').astype('category') # Otimizado para 'category'''
 
-    # C. Otimização de Tipo (Ex: Categoria de Mercado)
+    # C. Otimização de Tipo
     if 'Estratégia' in df.columns:
         df['Estratégia'] = df['Estratégia'].astype('category')
 
 
-    # --- 2. COLUNAS ANALÍTICAS DE TRADE ---
+    # --- 2. COLUNAS ANALÍTICAS DE TRADE (Descomentar se necessário) ---
+    # Se você precisa dessas colunas na análise, remova os comentários
 
     if 'L/P' in df.columns:
         # 1. Categoria de Resultado: WIN, LOSS ou PUSH/VOID
@@ -53,11 +54,10 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame:
 
     # 3. Cálculo do ROI (Retorno sobre Investimento) - Requer a coluna 'Stake'
     if 'L/P' in df.columns and 'Stake' in df.columns:
-         # *IMPORTANTE: Assuma que a coluna Stake também foi limpa e convertida para float*
-         # ...
-         df['ROI (%)'] = (
-             (df['L/P'] / df['Stake']) * 100
-         ).mask(df['Stake'] == 0, 0)'''
+        # Lembre-se que 'Stake' deve ser convertida para float antes deste ponto!
+        df['ROI (%)'] = (
+            (df['L/P'] / df['Stake']) * 100
+        ).mask(df['Stake'] == 0, 0)
          
     return df.reset_index(drop=True)
 
@@ -83,14 +83,33 @@ def render_card(title, value, gradient):
         </div>
     """, unsafe_allow_html=True)
 
-def calculate_balance(df: pd.DataFrame):
-    """Calcula a Receita Total, Despesa Total e Saldo, usando a coluna 'Tipo'."""
-    # Garante que as colunas críticas existem (pode remover se o process_data for robusto)
-    if df.empty or 'Status' not in df.columns or 'L/P' not in df.columns:
-        return 0.0, 0.0, 0.0 # Retorna zero se não houver dados
+def calculate_trade_balance(df: pd.DataFrame) -> dict:
+    """
+    Calcula Lucros Totais, Perdas Totais e Saldo Acumulado (L/P).
+    Assume que o DataFrame possui as colunas 'L/P' (float) e 'Resultado' (category/string).
+    """
+    if df.empty or 'L/P' not in df.columns or 'Resultado' not in df.columns:
+        # Retorna zero se faltarem dados ou colunas
+        return {
+            "saldo_total": 0.0, 
+            "total_ganhos": 0.0, 
+            "total_perdas_abs": 0.0
+        }
 
-    receita = df[df['L/P'] > 0.01].sum()
-    despesa = df[df['L/P'] < 0.01].sum()
-    saldo = receita - despesa
-    
-    return receita, despesa, saldo
+    # 1. Saldo Acumulado (Soma de toda a coluna L/P)
+    saldo_total = df['L/P'].sum()
+
+    # 2. Total de Ganhos (Soma dos L/P positivos)
+    # 🛑 SINTAXE CORRIGIDA
+    total_ganhos = df.loc[df['Resultado'] == 'WIN', 'L/P'].sum()
+
+    # 3. Total de Perdas (Soma dos L/P negativos, pegando o valor absoluto para exibição)
+    # 🛑 SINTAXE CORRIGIDA
+    total_perdas_negativo = df.loc[df['Resultado'] == 'LOSS', 'L/P'].sum()
+    total_perdas_abs = abs(total_perdas_negativo)
+
+    return {
+        "saldo_total": saldo_total, 
+        "total_ganhos": total_ganhos, 
+        "total_perdas_abs": total_perdas_abs
+    }
