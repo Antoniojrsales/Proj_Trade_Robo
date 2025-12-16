@@ -62,12 +62,30 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame:
          
     return df.reset_index(drop=True)
 
-def render_card(title, value, gradient):
-    valor_formatado = f"R${value:,.2f}".replace(',', 'v').replace('.', ',').replace('v', '.')
+def render_card(title, value, gradient, prefix):
+    # Definir a formatação com base no prefixo
+    if prefix == 'R$':
+        valor_formatado = f"R${value:,.2f}".replace(',', 'v').replace('.', ',').replace('v', '.')
+    elif prefix == '%':
+        # Formata o número com 2 casas decimais (e separador de milhar US)
+        valor_base = f"{value:,.2f}"        
+        # Converte para o padrão Brasileiro (troca vírgula por ponto, e ponto por vírgula)
+        valor_br = valor_base.replace('.', 'v').replace(',', '.').replace('v', ',')        
+        # Adiciona o símbolo de porcentagem no final
+        valor_formatado = valor_br + "%" # <--- CORREÇÃO AQUI
+    elif prefix is None:
+        # Garante que o número é tratado como inteiro, com separador de milhar BR
+        valor_str = f"{int(value):,}"
+        valor_formatado = valor_str.replace(',', '.') # Troca separador de milhar US por BR
+    else:
+        # Caso de fallback, se um prefixo não tratado for usado
+        valor_formatado = f"{value}"
+
     card_style = f"""
         background: linear-gradient(to right, {gradient});
         color: white;
         padding: 20px;
+        margin-top: 10px;
         border-radius: 10px;
         font-size: 1.2em;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -150,3 +168,16 @@ def calculate_trade_accuracy(df: pd.DataFrame):
     )
 
     return analise_final
+
+def calculate_trade_games(df: pd.DataFrame):
+    # A. Verifica se a coluna Status existe e se o DataFrame não está vazio
+    if 'Status' in df.columns and not df.empty:
+        
+        # B. Filtra somente as apostas finalizadas ('SETTLED') e usa .shape[0] para contar as linhas
+        apostas_finalizadas_df = df.loc[df['Status'] == 'SETTLED']
+        total_jogos_finalizados = apostas_finalizadas_df.shape[0] # <--- CORREÇÃO AQUI
+        
+    else:
+        total_jogos_finalizados = 0
+
+    return total_jogos_finalizados
