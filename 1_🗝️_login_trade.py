@@ -19,14 +19,20 @@ st.sidebar.markdown('Desenvolvido por [AntonioJrSales](https://antoniojrsales.gi
 st.markdown("""
     <style>
     .stButton>button {
-        background-color: #4CAF50;
+        background-color: #0e6ec5;
         color: white;
         font-weight: bold;
         border-radius: 5px;
         padding: 0.5em 1em;
     }
+    /* Efeito de hover para não ficar estático */
+    .stButton > button:hover {
+        background-color: #004d9f !important;
+        color: white !important;
+    }
     </style>
 """, unsafe_allow_html=True)
+
 
 # -------------------------------
 # 🗂️ Carregar Credenciais de Usuário
@@ -85,7 +91,27 @@ if 'logged_in' not in st.session_state or not st.session_state['logged_in']:
         username = st.text_input("👤 Usuário").strip()
         password = st.text_input("🔒 Senha", type="password").strip()
 
-        submit = st.form_submit_button("Entrar", type="primary")
+        submit = st.form_submit_button("Entrar")
+
+        st.markdown("""
+        <style>
+        /* Alvo específico para o botão de submit dentro do form */
+        div.stFormSubmitButton > button {
+            background-color: #075eb2 !important;
+            color: white !important;
+            border-radius: 5px;
+            border: none;
+            height: auto;
+            padding: 0.5em 1em;
+        }
+        
+        /* Efeito de hover para não ficar estático */
+        div.stFormSubmitButton > button:hover {
+            background-color: #004d9f !important;
+            color: white !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
         
         if submit: 
             if username in USERS and check_password(password, USERS[username]):

@@ -62,45 +62,39 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame:
          
     return df.reset_index(drop=True)
 
-def render_card(title, value, gradient, prefix):
-    # Definir a formatação com base no prefixo
+def render_card(title, value, gradient, prefix, delta=None):
+    # --- FORMATAÇÃO DOS VALORES ---
     if prefix == 'R$':
-        valor_formatado = f"R${value:,.2f}".replace(',', 'v').replace('.', ',').replace('v', '.')
+        valor_formatado = f"R$ {value:,.2f}".replace(',', 'v').replace('.', ',').replace('v', '.')
     elif prefix == '%':
-        # Formata o número com 2 casas decimais (e separador de milhar US)
-        valor_base = f"{value:,.2f}"        
-        # Converte para o padrão Brasileiro (troca vírgula por ponto, e ponto por vírgula)
-        valor_br = valor_base.replace('.', 'v').replace(',', '.').replace('v', ',')        
-        # Adiciona o símbolo de porcentagem no final
-        valor_formatado = valor_br + "%" # <--- CORREÇÃO AQUI
-    elif prefix is None:
-        # Garante que o número é tratado como inteiro, com separador de milhar BR
-        valor_str = f"{int(value):,}"
-        valor_formatado = valor_str.replace(',', '.') # Troca separador de milhar US por BR
+        valor_formatado = f"{value:,.2f}".replace('.', ',') + "%"
     else:
-        # Caso de fallback, se um prefixo não tratado for usado
         valor_formatado = f"{value}"
 
-    card_style = f"""
-        background: linear-gradient(to right, {gradient});
-        color: white;
-        padding: 20px;
-        margin-top: 10px;
-        border-radius: 10px;
-        font-size: 1.2em;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    # --- LÓGICA DO DELTA (Para remover o erro visual) ---
+    delta_content = ""
+    if delta is not None:
+        cor_delta = "#00ff00" if delta >= 0 else "#ff4b4b"
+        seta = "▲" if delta >= 0 else "▼"
+        delta_content = f'<div style="margin-top:10px;color:{cor_delta};font-size:0.8em;">{seta} {abs(delta)}% vs anterior</div>'
+
+    # --- ESTILIZAÇÃO DO CARD ---
+    card_html = f"""
+    <div style="background:linear-gradient(to right, {gradient});
+                padding:20px;
+                border-radius:15px;
+                color:white;
+                box-shadow:0 4px 10px rgba(0,0,0,0.3);
+                min-height:100px;
+                font-family: 'Segoe UI', sans-serif;
+                margin-top:10px">
+        <div style="font-size:1em;opacity:0.8;">{title}</div>
+        <div style="font-size:1.7em;font-weight:bold;margin:5px 0;">{valor_formatado}</div>
+        {delta_content}
+    </div>
     """
-    saldo_style = """
-        font-size: 1.5em;
-        font-weight: bold;
-    """
-    st.markdown(f"""
-        <div style="{card_style}">
-            {title}
-            <div style="{saldo_style}">{valor_formatado}</div>
-        </div>
-    """, unsafe_allow_html=True)
+    
+    st.markdown(card_html, unsafe_allow_html=True)
 
 def calculate_trade_balance(df: pd.DataFrame) -> dict:
     """
